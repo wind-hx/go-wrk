@@ -4,24 +4,48 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"fmt"
 
-	"golang.org/x/net/http2"
 	"time"
+
 	"github.com/tsliwowicz/go-wrk/util"
+	"golang.org/x/net/http2"
 )
 
-func client(disableCompression, disableKeepAlive, skipVerify bool, timeoutms int, allowRedirects bool, clientCert, clientKey, caCert string, usehttp2 bool) (*http.Client, error) {
+func client(disableCompression, disableKeepAlive, skipVerify bool, timeoutms int, allowRedirects bool, clientCert, clientKey, caCert string, usehttp2 bool, proxyPath string) (*http.Client, error) {
+	var proxy *url.URL
+	if proxyPath != "" {
+		proxyResult, err := ioutil.ReadFile(proxyPath)
+		if err != nil {
+			return nil, fmt.Errorf("proxyPath read error: %s", err)
+		}
+		proxyStrList := strings.Split(string(proxyResult), "\n")
+		rand.Seed(time.Now().UnixNano())
+		proxy, _ = url.Parse(proxyStrList[rand.Intn(len(proxyStrList))])
+	}
 
 	client := &http.Client{}
 	//overriding the default parameters
-	client.Transport = &http.Transport{
-		DisableCompression:    disableCompression,
-		DisableKeepAlives:     disableKeepAlive,
-		ResponseHeaderTimeout: time.Millisecond * time.Duration(timeoutms),
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: skipVerify},
+	if proxy != nil {
+		client.Transport = &http.Transport{
+			DisableCompression:    disableCompression,
+			DisableKeepAlives:     disableKeepAlive,
+			ResponseHeaderTimeout: time.Millisecond * time.Duration(timeoutms),
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: skipVerify},
+			Proxy:                 http.ProxyURL(proxy),
+		}
+	} else {
+		client.Transport = &http.Transport{
+			DisableCompression:    disableCompression,
+			DisableKeepAlives:     disableKeepAlive,
+			ResponseHeaderTimeout: time.Millisecond * time.Duration(timeoutms),
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: skipVerify},
+		}
 	}
 
 	if !allowRedirects {

@@ -16,7 +16,7 @@ import (
 
 const APP_VERSION = "0.9"
 
-//default that can be overridden from the command line
+// default that can be overridden from the command line
 var versionFlag bool = false
 var helpFlag bool = false
 var duration int = 10 //seconds
@@ -38,6 +38,7 @@ var clientCert string
 var clientKey string
 var caCert string
 var http2 bool
+var proxyPath string
 
 func init() {
 	flag.BoolVar(&versionFlag, "v", false, "Print version details")
@@ -58,9 +59,10 @@ func init() {
 	flag.StringVar(&clientKey, "key", "", "Private key file name (SSL/TLS")
 	flag.StringVar(&caCert, "ca", "", "CA file to verify peer against (SSL/TLS)")
 	flag.BoolVar(&http2, "http", true, "Use HTTP/2")
+	flag.StringVar(&proxyPath, "p", "", "Proxy path")
 }
 
-//printDefaults a nicer format for the defaults
+// printDefaults a nicer format for the defaults
 func printDefaults() {
 	fmt.Println("Usage: go-wrk <options> <url>")
 	fmt.Println("Options:")
@@ -125,7 +127,7 @@ func main() {
 	}
 
 	loadGen := loader.NewLoadCfg(duration, goroutines, testUrl, reqBody, method, host, header, statsAggregator, timeoutms,
-		allowRedirectsFlag, disableCompression, disableKeepAlive, skipVerify, clientCert, clientKey, caCert, http2)
+		allowRedirectsFlag, disableCompression, disableKeepAlive, skipVerify, clientCert, clientKey, caCert, http2, proxyPath)
 
 	for i := 0; i < goroutines; i++ {
 		go loadGen.RunSingleLoadSession()

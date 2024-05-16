@@ -38,6 +38,7 @@ type LoadCfg struct {
 	clientKey          string
 	caCert             string
 	http2              bool
+	proxyPath          string
 }
 
 // RequesterStats used for colelcting aggregate statistics
@@ -66,9 +67,10 @@ func NewLoadCfg(duration int, // seconds
 	clientCert string,
 	clientKey string,
 	caCert string,
-	http2 bool) (rt *LoadCfg) {
+	http2 bool,
+	proxyPath string) (rt *LoadCfg) {
 	rt = &LoadCfg{duration, goroutines, testUrl, reqBody, method, host, header, statsAggregator, timeoutms,
-		allowRedirects, disableCompression, disableKeepAlive, skipVerify, 0, clientCert, clientKey, caCert, http2}
+		allowRedirects, disableCompression, disableKeepAlive, skipVerify, 0, clientCert, clientKey, caCert, http2, proxyPath}
 	return
 }
 
@@ -174,7 +176,7 @@ func (cfg *LoadCfg) RunSingleLoadSession() {
 	start := time.Now()
 
 	httpClient, err := client(cfg.disableCompression, cfg.disableKeepAlive, cfg.skipVerify,
-		cfg.timeoutms, cfg.allowRedirects, cfg.clientCert, cfg.clientKey, cfg.caCert, cfg.http2)
+		cfg.timeoutms, cfg.allowRedirects, cfg.clientCert, cfg.clientKey, cfg.caCert, cfg.http2, cfg.proxyPath)
 	if err != nil {
 		log.Fatal(err)
 	}
